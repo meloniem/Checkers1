@@ -580,7 +580,8 @@ public class CheckersLogic {
 		}
 		
 		catch(StringIndexOutOfBoundsException e) {
-			e.printStackTrace("String is not correct length.");
+			e.printStackTrace();
+			System.out.println("String is not correct length.");
 		}
 					
 			
