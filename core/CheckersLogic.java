@@ -414,11 +414,6 @@ public class CheckersLogic {
 			 */
 			public boolean checkMoves(int player, int oldRow, int oldCol, int newRow, int newCol) {
 				
-				if(!hasMove(player, move)) {
-					if(currentPlayer == PLAYER_X) gameOver("Player "  + SYMBOL_X + " is out of moves. Player o wins!.");
-					if(currentPlayer == PLAYER_O) gameOver("Player " + SYMBOL_O + " is out of moves. Player x wins!");
-				}
-				
 				//Check move is diagonal
 				if(oldRow == newRow || oldCol == newCol) {
 					System.out.println("Invalid move: moves must be to diagonal spaces.");
