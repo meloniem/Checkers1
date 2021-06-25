@@ -576,7 +576,7 @@ public class CheckersLogic {
 		}
 		catch(IllegalArgumentException e) {
 			e.printStackTrace();
-			System.out.println("Invalid input was entered into method takePiece.);
+			System.out.println("Invalid input was entered into method takePiece.");
 		}
 		
 		catch(StringIndexOutOfBoundsException e) {
