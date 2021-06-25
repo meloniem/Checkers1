@@ -322,11 +322,13 @@ public class CheckersTextConsole {
 		}
 		
 		catch(NullPointerException e) {
-			e.printStackTrace("An object was not initialized.");
+			e.printStackTrace();
+			System.out.println("An object was not initialized.");
 		}
 		
 		catch(StringIndexOutOfBoundsException e) {
-			e.printStackTrace("String input is not correct length");
+			e.printStackTrace();
+			System.out.println("String input is not correct length");
 		}
 		
 		
