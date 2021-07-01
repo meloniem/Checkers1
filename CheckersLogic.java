@@ -1,5 +1,6 @@
 package core;
 
+import java.io.InputStream;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Vector;
@@ -140,7 +141,7 @@ public class CheckersLogic {
 				int oldColInt = convertToInt(oldCol);
 				int newRowInt = convertToInt(Integer.parseInt(newRow));
 				int newColInt = convertToInt(newCol);
-				if(moveIsJump(player, oldRowInt, oldColInt, (oldRowInt+newRowInt)/2, (oldColInt+newColInt)/2, newRowInt, newColInt))
+				if(moveIsJump(player, oldRowInt, oldColInt, newRowInt, newColInt))
 					takePiece(player, oldRowInt, oldColInt, newRowInt, newColInt);
 				else {
 					helperMove(player, oldRowInt, oldColInt, newRowInt, newColInt);
@@ -161,16 +162,14 @@ public class CheckersLogic {
 		 */
 		public void helperMove(int player, int fromR, int fromC, int toR, int toC) {
 			try {
-			if(player == PLAYER_X) {
+
+		
 				if(numPiecesO == 0) gameOver("Player O has no pieces. X wins!");
-				if(numPiecesX == 0) gameOver("Player X has no pieces. O wins!");
-				}
-			
-			else if(player == PLAYER_O) {
-				if(numPiecesO == 0) gameOver("Player O has no pieces. X wins!");
-				if(numPiecesX == 0) gameOver("Player X has no pieces. O wins!");
-				}
+				else if(numPiecesX == 0) gameOver("Player X has no pieces. O wins!");
+				else if(!hasMove(player)) gameOver("Player X has no moves left. O wins!");
+				else if(!hasMove(player)) gameOver("Player O has no moves left. X wins!");
 				
+				else {	
 			//Set new position to char at old position
 			board.board[toR][toC] = board.board[fromR][fromC];
 			//Set old position to "_"
@@ -198,6 +197,7 @@ public class CheckersLogic {
 				if(player == PLAYER_O) player = PLAYER_X;
 			}
 
+			}
 			}
 			catch(IndexOutOfBoundsException e) {
 				e.printStackTrace();
@@ -266,38 +266,7 @@ public class CheckersLogic {
 			return validMove(player, oldRowInt, oldColInt, newRowInt, newColInt);
 		}
 		
-		/**
-		 * Checks if player has any moves left. If not, returns false. (Game will be ended in above methods).
-		 * 
-		 * @param player current player.
-		 * @param move current position to check for moves
-		 * @return true if player has moves left. False if no moves left (game over). 
-		 */
-		public boolean hasMove(int player, String move) {
-			
-			String oldRow = move.substring(0, 1);
-			String oldCol = move.substring(1,2);
-			String newRow = move.substring(3,4);
-			String newCol = move.substring(4,5);
-			
-			int row1 = convertToInt(Integer.parseInt(oldRow));
-			int col1 = convertToInt(oldCol);
-			int row2 = convertToInt(Integer.parseInt(newRow));
-			int col2 = convertToInt(newCol);
-			
-			if(moveIsJump(player, row1, col1, Math.abs((row1+row2)/2), Math.abs((col1+col2)/2), row2, col2)) {
-				return true;
-			}
-			else if(validMove(player, move) || validMove(player, row1, col1, row1+1, col1+1)
-					|| validMove(player, row1, col1, row1-1, col1+1) ||
-					validMove(player, row1, col1, row1-1, row1-1) || validMove(player, row1, col1, row1+1, col1-1))
-				return true;
-			
-			else {
-				return false;
-			}
-		}
-		
+
 		/**
 		 * Verify that user is not moving to an invalid square. Checks both old and new
 		 * positions for correct value.
@@ -414,11 +383,9 @@ public class CheckersLogic {
 			 */
 			public boolean checkMoves(int player, int oldRow, int oldCol, int newRow, int newCol) {
 				
-				if(!hasMove(player, move)) {
-					if(currentPlayer == PLAYER_X) gameOver("Player "  + SYMBOL_X + " is out of moves. Player o wins!.");
-					if(currentPlayer == PLAYER_O) gameOver("Player " + SYMBOL_O + " is out of moves. Player x wins!");
-				}
-				
+			if(oldRow > 7 || oldCol > 7 || newRow > 7 || newCol > 7 || oldRow < 0 || oldCol < 0 || newRow < 0 || newCol < 0)
+				return false;
+			
 				//Check move is diagonal
 				if(oldRow == newRow || oldCol == newCol) {
 					System.out.println("Invalid move: moves must be to diagonal spaces.");
@@ -443,17 +410,14 @@ public class CheckersLogic {
 				}
 				
 					//Check O jump moves
-				if(player == PLAYER_O) {
-					if(distRow > 1) {
+				if(player == PLAYER_O && distRow > 1) {
 						char symbol = board.board[Math.abs((newRow + oldRow)/2)][Math.abs((newCol+oldCol)/2)];
 						if(symbol != SYMBOL_X) {
 							System.out.println("Invalid move: cannot move that far with given input.");
 							return false;
 						}
-						else {
+						else 
 							return true;
-						}
-					}
 				}
 				
 				if(player == PLAYER_X) {
@@ -464,7 +428,6 @@ public class CheckersLogic {
 							return false;
 						}
 						else {
-							board.board[Math.abs((newRow+oldRow)/2)][Math.abs((newCol+oldCol)/2)] = '_';
 							return true;
 						}
 					}
@@ -482,108 +445,8 @@ public class CheckersLogic {
 		 * @param col col player's checker is moving to
 		 */
 		public void takePiece(int player, int oldRow, int oldCol, int row, int col) {
-			//Check for a win
-		try {	
-			helperMove(player,oldRow, oldCol, row,col);
-			
-			if(numPiecesO == 0 || numPiecesX == 0) {
-				gameOver("Game Over!");
-				if(numPiecesO == 0) System.out.println("Player X Wins!");
-				if(numPiecesX == 0) System.out.println("Player O Wins!");
-				return;
-			}
-			
-			while(true) {
-				if(isComputerOpp == false) {
-					board.displayBoard();
-					Scanner scanner = new Scanner(System.in);
-					System.out.println("You took an opponent piece. To move again, enter 'Y', or "
-							+ "'N' to skip.");
-					String input = scanner.next();
-					if(input.equals("Y")) {
-				
-						if(player == PLAYER_X && !isComputerOpp) {
-							System.out.println("Player X: Please enter piece to move");
-							String movePosition = scanner.next();
-							String oldRow1 = movePosition.substring(0,1);
-							String oldCol1 = movePosition.substring(1,2);
-							String newRow = movePosition.substring(3,4);
-							String newCol = movePosition.substring(4,5);
-							
-							int oldRowInt = convertToInt(Integer.parseInt(oldRow1));
-							int oldColInt = convertToInt(oldCol1);
-							int newRowInt = convertToInt(Integer.parseInt(newRow));
-							int newColInt = convertToInt(newCol);
-						
-						
-				
-							int dist1 = Math.abs(oldRowInt - newRowInt);
-							char tempChar = board.board[Math.abs(newRowInt + oldRowInt)/2][(Math.abs(newColInt+oldColInt)/2)];
-							if(tempChar == 'o' && dist1 ==2) {
-								if(validMove(player, oldRowInt, oldColInt, newRowInt, newColInt)) {
-									board.board[Math.abs((newRowInt + oldRowInt)/2)][Math.abs((newColInt + oldColInt)/2)] = 'x';
-									helperMove(player, oldRowInt, oldColInt, newRowInt, newColInt);
-									break;
-								}
-							}
-							
-							else {	System.out.println("Invalid entry, try again.");
-						}
-					}
-					
-				
-					
-					else if(player == PLAYER_O && !isComputerOpp) {
-						System.out.println("Player O: Please enter old and new position separated by ','.");
-						String movePosition = scanner.next();
-						
-						char oldRow1 = movePosition.charAt(0);
-						char oldCol1 = movePosition.charAt(1);
-						char newRow = movePosition.charAt(3);
-						char newCol = movePosition.charAt(4);
-						
-						int oldRowInt = convertToInt((int)oldRow1);
-						int oldColInt = convertToInt(new StringBuilder().append(oldCol1).toString());
-						int newRowInt = convertToInt((int) newRow);
-						int newColInt = convertToInt(new StringBuilder().append(newCol).toString());
-						
-			
-							int dist1 = Math.abs(oldRowInt - newRowInt);
-							char tempChar = board.board[Math.abs(newRowInt + oldRowInt)/2][(Math.abs(newColInt+oldColInt)/2)];
-							if(tempChar == 'x' && dist1 ==2) {
-								if(validMove(player, movePosition)) {
-									board.board[Math.abs((newRowInt + oldRowInt)/2)][Math.abs((newColInt + oldColInt)/2)] = 'o';
-									helperMove(player, oldRowInt, oldColInt, newRowInt, newColInt);
-									break;
-								}
-							}
-							else {	System.out.println("Invalid entry, try again.");
-						}
-						scanner.close();
-					}
-					
-				else {
-					System.out.println("Invalid move. Try again.");
-				}
-				}
-				
-				else if (input.equals("N")) {
-					break;
-				}
-			}
-			}
-				
-		}
-		catch(IllegalArgumentException e) {
-			e.printStackTrace();
-			System.out.println("Invalid input was entered into method takePiece.);
-		}
-		
-		catch(StringIndexOutOfBoundsException e) {
-			e.printStackTrace();
-			System.out.println("String is not correct length.");
-		}
-					
+	
+			helperMove(player,oldRow, oldCol, row,col);				
 			
 		}
 		
@@ -597,7 +460,7 @@ public class CheckersLogic {
 		 * @return int, index to be used with array
 		 */
 		public int convertToInt(String input){
-	        int k=0;
+	        int k=-1;
 	        if (input.equals("a"))       k = 0;
 	        else if (input.equals("b") ) k = 1;
 	        else if (input.equals("c") ) k = 2;
@@ -617,7 +480,7 @@ public class CheckersLogic {
 		 * @return int correct array value
 		 */
 		 public int convertToInt(int input){
-		        int i=0;
+		        int i=-1;
 		        if (input==1)         i = 7;
 		        else if (input == 2)  i = 6;
 		        else if (input == 3)  i = 5;
@@ -644,40 +507,59 @@ public class CheckersLogic {
 		 * @param newCol int new col being moved to 
 		 * @return boolean true if move is a jump, false if not
 		 */
-		boolean moveIsJump(int player, int oldRow, int oldCol, int midRow, int midCol, int newRow, int newCol) {
+		boolean moveIsJump(int player, int oldRow, int oldCol,int newRow, int newCol) {
 			if(newRow < 0 || newRow >= 8 || newCol < 0 || newCol >=8)
 				return false; //not on board
+			if(Math.abs(newRow-oldRow) <2 || Math.abs(newCol-oldCol) <2) return false; //not a jump 
 			
 			if(board.board[newRow][newCol] != '_') {
 				return false; //already occupied
 			}
 			
-			if(player == PLAYER_O) {
-				if(board.board[oldRow][oldCol] == SYMBOL_O) {
-					if(board.board[Math.abs((oldRow+newRow)/2)][Math.abs((oldCol+newCol)/2)] == SYMBOL_X) return true;
-					else return false; //O's can only move up
-				}
-				if(board.board[midRow][midCol] == SYMBOL_O || board.board[midRow][midCol] == '_')
-					return false; //no x piece to jump
-				return true; //legal jump
-			}
-			else {
+			if(player == PLAYER_O && board.board[oldRow][oldCol] == SYMBOL_O) {
+					if(board.board[Math.abs((oldRow+newRow)/2)][Math.abs((oldCol+newCol)/2)] != SYMBOL_X) return false;
+					 //O's can only move up
 				
-				//if init position is x
-				if(board.board[oldRow][oldCol] == SYMBOL_X) {
-					//if intermediate position is o, return true
-					if(board.board[Math.abs((oldRow+newRow)/2)][Math.abs((oldCol+newCol)/2)] == SYMBOL_O) {
-						return true;
-					}else return false; //x can only move down
+				else return true;
 				}
-					
-				if(board.board[midRow][midCol] != SYMBOL_O)
-					return false; //no o piece to jump
-				return true;	//legal jump
+			
+			else {
+				if(player==PLAYER_X && board.board[oldRow][oldCol] == SYMBOL_X )
+					if(board.board[Math.abs((oldRow+newRow)/2)][Math.abs((oldCol+newCol)/2)] != SYMBOL_O) 
+						return false;
+			 return true; //x can only move down
+				}
+
 			}
-			
-			
-			
+		
+		/**
+		 * Starting method for hasMove. Checks if player has moves for any pieces.
+		 * @param player current player.
+		 * @return true if player has any moves left.
+		 */
+		public boolean hasMove(int player) {
+			for(int i = 0; i < 8; i++) {
+				for(int j = 0; j < 8; j++) {
+					if((player == PLAYER_X && board.board[i][j] == 'x') || (player == PLAYER_O && board.board[i][j] == 'o'))
+						if(hasMove(player, i, j)) return true;
+				}
+			}
+			return false;
+		}
+		
+		/**
+		 * Check if a player has any moves in the surrounding tiles.
+		 * @param player current player
+		 * @param row current row
+		 * @param col current column
+		 * @return true if player has a move left at a specific row and column..
+		 */
+		public boolean hasMove(int player, int row, int col) {
+			if(!validMove(player, row, col, row+1, col+1) && !validMove(player, row, col, row-1, col+1) && !validMove(player, row, col, row+1, col-1) && !validMove(player, row, col, row-1, col-1)
+					&& !validMove(player, row, col, row+2, col+2) && !validMove(player, row, col, row+2, col-2) && !validMove(player, row, col, row-2, col+2) && !validMove(player, row, col, row-2, col-2))
+				return false;
+			else return true;
+				
 		}
 		
 	
@@ -740,11 +622,22 @@ public class CheckersLogic {
 		 * @return true if space has a piece.
 		 */
 		public boolean isOccupied(int row, int col) {
-			if(row > 0 && col > 0 && row < 8 && col < 8)
-				if(board[row][col] != '_') 
-					return true;
+			if(row < 0 || col < 0 || row >=8 || col >=8) {
+				System.out.println("Illegal choice of indices. Returning false.");
+				return false;
+			}
+			if(row >= 0 && col >= 0 && row < 8 && col < 8) {
+				if(board[row][col] == '_') 
+					return false;
 			
-			return false;		
+			
+			else if(board[row][col] == 'x' || board[row][col] == 'o')
+			 return true;		
+			
+			}
+			 return false;	
+			
+			
 		}
 		
 		
@@ -841,8 +734,7 @@ class Move{
 	public boolean jump(Move move) {
 
 		//If intermediate space contains an opponent space, move is a jump.
-		if(move.newRow - move.currRow == 2 && move.newCol - move.currCol == 2
-				|| move.newRow - move.currRow == -2 || move.newCol - move.currCol == -2) {
+		if(Math.abs(move.newRow-move.currRow)== 2 && Math.abs(move.newCol - move.currCol)== 2)  {
 			if((currentPlayer == 1 &&
 					this.board[Math.abs((move.currRow+move.newRow)/2)][Math.abs((move.currCol + move.newCol)/2)] == 'o') || 
 					currentPlayer == 0 && this.board[Math.abs((move.currRow+move.newRow)/2)][Math.abs((move.currCol+ move.newCol)/2)] == 'x')
@@ -850,7 +742,18 @@ class Move{
 		}
 	
 			return false;	
-	}	
+	}
+	
+	/**
+	 * Implementation to compare two moves.
+	 * @param move move being compared
+	 * @return true if the moves are equal.
+	 */
+	public boolean equals(Move move) {
+		if(this.currRow == move.currRow && this.currCol == move.currCol && this.newRow == move.newRow && this.newCol == move.newCol && this.currentPlayer == move.currentPlayer )
+			return true;
+		else return false;
+	}
 } //end Move Class
 
 
@@ -941,8 +844,6 @@ public class CheckersComputerPlayer {
 				if(symbol != SYMBOL_X) 
 					return false;
 				else {
-					//try commenting this line out to fix
-					//if(board.board[Math.abs((newRow + oldRow)/2)][Math.abs((newCol+oldCol)/2)] =='_')
 					return true;
 				}
 			}
@@ -995,138 +896,7 @@ public class CheckersComputerPlayer {
 
 	}
 	
-	/**
-	 * Returns the legal moves available for a player.
-	 * If any jumps exist, only jumps will be returned in vector, as jump moves
-	 * should be made first. Looks at each space on board and determines if the move
-	 * is valid for the specified player.
-	 * @param player
-	 * @return Vector of Moves vector of moves available to player.
-	 */
-	public Vector<Move> getLegalMoves(int player){
-		
-		Vector<Move> pMovesTotal = new Vector<Move>();
-		
-		//Iterate through each position on the board for player's pieces
-		for(int row = 0; row < 8; row++) {
-			for(int col = 0; col < 8; col++) {
-				Vector<Move> pMoves = getLegalJumps(player, row, col);
-				
-				//If jumps exist, simply return the jumps as they
-				//must be performed if they exist.
-				if(pMoves.size()>0) {
-					return pMoves;
-				}
-				
-				//Return all moves for piece at position (row,col)
-				else if (pMoves.size() == 0) pMoves = getLegalMoves(player, row, col);
-			
-				//Add all members of pMoves to pMovesTotal
-				for(int i = 0; i < pMoves.size(); i++) {
-					pMovesTotal.add(pMoves.get(i));
-				}
-			}
-		}
-		return pMovesTotal;
-		
-	}
 	
-	/**
-	 * getLegalMoves(player, row, col) verifies if the given position (row,col)
-	 * has legal moves for the player. If so, the moves are stored in the Move vector
-	 * and returned to the previous getLegalMoves method.
-	 *** PARAMS MUST BE IN CONVERTED VERSIONS!
-	 * @param player current player
-	 * @param row current piece position (row) being checked
-	 * @param col current piece position (col) being checked 
-	 * @return Vector of Moves - a list of possible moves.
-	 */
-	public Vector<Move> getLegalMoves(int player, int row, int col){
-		Vector<Move> pMoves = new Vector<Move>();
-		
-		//For player o, checks if piece is an o piece, then checks
-		//If the there are legal moves for that piece.
-		//Inputs char values of row,col into validMove.
-		if(player == PLAYER_O) {
-			if(board.board[row][col] == SYMBOL_O) {
-				if(validMove(player, row, col, row+1, col+1))
-					pMoves.add(new Move(player, board.board, row, col, row+1, col+1));
-				if(validMove(player, row,col,row-1, col-1))
-					pMoves.add(new Move(player, board.board, row, col, row-1, col-1));
-				if(validMove(player, row, col, row+1, col-1))
-					pMoves.add(new Move(player, board.board, row, col, row+1, col-1));
-				if(validMove(player, row, col, row-1,row+1))
-					pMoves.add(new Move(player, board.board, row, col, row-1, col+1));
-			}
-		
-		}
-		
-		//For player x, checks if the piece is an x piece, then checks
-		//If there are legal moves for that piece.
-		else if (player == PLAYER_X) {
-			if(board.board[row][col] == SYMBOL_X) {
-				if(validMove(player, row, col, row+1,col+1))
-					pMoves.add(new Move(player, board.board, row, col, row+1, col+1));
-				if(validMove(player, row, col, row-1, col-1))
-					pMoves.add(new Move(player, board.board, row, col, row-1, col-1));
-				if(validMove(player, row, col, row+1, col-1))
-					pMoves.add(new Move(player, board.board, row, col, row+1, col-1));
-				if(validMove(player, row, col, row-1, row+1))
-					pMoves.add(new Move(player, board.board, row, col, row-1, col+1));
-			}
-		}
-		return pMoves;
-	}
-	
-	/**
-	 * Adds legal jumps to a vector of moves. Verifies that a jump is legal by checking that it is the correct symbol,
-	 * the move is valid, and the jump is valid before adding to the list. 
-	 * **Params must be in converted versions!!!!***
-	 * @param player current player
-	 * @param row current piece position (row)
-	 * @param col current piece position (column)
-	 * @return Vector of Moves pMoves, all possible jumps. 
-	 */
-	public Vector<Move> getLegalJumps(int player, int row, int col){
-		Vector<Move> pMoves = new Vector<Move>();
-		if(player == PLAYER_O) {
-			if(board.board[row][col] == SYMBOL_O) {
-				if(validMove(player, row, col, row+2, col+2))
-					if(moveIsJump(player, row, col, row+1, col+1, row+2, col+2));
-						pMoves.add(new Move(player, board.board, row, col, row+2, col+2));
-				if(validMove(player, row, col, row-2, col-2))
-					if(moveIsJump(player, row, col, row-1, col-1, row-2,col-2))
-						pMoves.add(new Move(player, board.board, row, col, row-2, col-2));
-				if(validMove(player, row, col, row+2, col-2))
-					if(moveIsJump(player, row, col, row+1, col-1, row+2, col-2))
-						pMoves.add(new Move(player, board.board, row, col, row+2, row-2));
-				if(validMove(player, row, col, row-2, col+2))
-					if(moveIsJump(player, row, col, row-1, col+1, row-2, col+2))
-							pMoves.add(new Move(player, board.board, row, col, row-2, col+2));
-			}
-		}
-		
-		if(player == PLAYER_X) {
-			if(board.board[row][col] == SYMBOL_X) {
-				if(validMove(player, row, col, row+2, col+2))
-					if(moveIsJump(player, row, col, row+1, col+1, row+2, col+2))
-						pMoves.add(new Move(player, board.board, row, col, row+2, col+2));
-				if(validMove(player, row, col, row-2, col-2))
-					if(moveIsJump(player, row, col, row-1, col-1, row-2,col-2))
-						pMoves.add(new Move(player, board.board, row, col, row-2, col-2));
-				if(validMove(player, row, col, row+2, col-2))
-					if(moveIsJump(player, row, col, row+1, col-1, row+2, col-2))
-						pMoves.add(new Move(player, board.board, row, col, row+2, col-2));
-				if(validMove(player, row, col, row-2, col+2))
-					if(moveIsJump(player, row, col, row-1, col+1, row-2, col+2))
-							pMoves.add(new Move(player, board.board, row, col, row-2, col+2));
-			}
-		}
-		
-		//player X jumps implementation			
-		
-		return pMoves;
-	}
 	
 	/**
 	 * Chooses and moves computer pieces based on difficulty level. For level 1, a random move will always be selected from the first 
@@ -1140,36 +910,45 @@ public class CheckersComputerPlayer {
 		if(pMoves.size() == 0) gameOver("Computer out of moves. Player wins!");
 		else{
 			Random randInt = new Random();
-		
-		int rand = randInt.nextInt(pMoves.size()+1);
 
+		int rand1 = randInt.nextInt(Math.abs(pMoves.size()));
+		int rand2 = randInt.nextInt(Math.abs(pMoves.size()));
+		int rand3 = randInt.nextInt(Math.abs(pMoves.size()));
+
+		if(rand1 !=0) rand1 = rand1*3/4;
+		if(rand2 != 0) rand2 = rand2/2;
+		if(rand3 !=0) rand3 = rand3/3;
 		
 		if(difficultyLevel == 1) {
 			
 			//Level 1 difficulty will not automatically take jumps, will just pick from first 3/4 of moves.
-			if(validMove(player, pMoves.get(rand).currRow, pMoves.get(rand).currCol, pMoves.get(rand).newRow, pMoves.get(rand).newCol))
-				helperMove(player, pMoves.get(rand*3/4).currRow, pMoves.get(rand*3/4).currCol, pMoves.get(rand*3/4).newRow, pMoves.get(rand*3/4).newCol);
+			if(validMove(player, pMoves.get(rand1).currRow, pMoves.get(rand1).currCol, pMoves.get(rand1).newRow, pMoves.get(rand1).newCol)) 
+				helperMove(player, pMoves.get(rand1).currRow, pMoves.get(rand1).currCol, pMoves.get(rand1).newRow, pMoves.get(rand1).newCol);
 		}
 		
 		if(difficultyLevel == 2) {
-			if(moveIsJump(player, pMoves.get(0).currRow, pMoves.get(0).currCol, pMoves.get(0).currRow+1, pMoves.get(0).currCol+1, pMoves.get(0).newRow, pMoves.get(0).newCol))
+			if(moveIsJump(player, pMoves.get(0).currRow, pMoves.get(0).currCol, pMoves.get(0).newRow, pMoves.get(0).newCol))
 				takePiece(player, pMoves.get(0).currRow, pMoves.get(0).currCol, pMoves.get(0).newRow, pMoves.get(0).newCol);
 			else 
-				if(validMove(player, pMoves.get(rand/2).currRow, pMoves.get(rand/2).currCol, pMoves.get(rand/2).newRow, pMoves.get(rand/2).newCol))
-					helperMove(player, pMoves.get(rand/2).currRow, pMoves.get(rand/2).currCol, pMoves.get(rand/2).newRow, pMoves.get(rand/2).newCol);
+				if(validMove(player, pMoves.get(rand2).currRow, pMoves.get(rand2).currCol, pMoves.get(rand2).newRow, pMoves.get(rand2).newCol))
+					helperMove(player, pMoves.get(rand2).currRow, pMoves.get(rand2).currCol, pMoves.get(rand2).newRow, pMoves.get(rand2).newCol);
 		}
 		
 		if(difficultyLevel == 3) {
-			if(moveIsJump(player, pMoves.get(0).currRow, pMoves.get(0).currCol, (pMoves.get(0).currRow+pMoves.get(0).newRow)/2, (pMoves.get(0).currCol+pMoves.get(0).newCol)/2, pMoves.get(0).newRow, pMoves.get(0).newCol))
+			if(moveIsJump(player, pMoves.get(0).currRow, pMoves.get(0).currCol, pMoves.get(0).newRow, pMoves.get(0).newCol))
 				takePiece(player, pMoves.get(0).currRow, pMoves.get(0).currCol, pMoves.get(0).newRow, pMoves.get(0).newCol);
 			else 
-				if(validMove(player, (char)pMoves.get(rand/3).currRow, pMoves.get(rand/3).currCol, pMoves.get(rand/3).newRow, pMoves.get(rand/3).newCol))
-					helperMove(player, pMoves.get(rand/3).currRow, pMoves.get(rand/3).currCol, pMoves.get(rand/3).newRow, pMoves.get(rand/3).newCol);
+				if(validMove(player, (char)pMoves.get(rand3).currRow, pMoves.get(rand3).currCol, pMoves.get(rand3).newRow, pMoves.get(rand3).newCol))
+					helperMove(player, pMoves.get(rand3).currRow, pMoves.get(rand3).currCol, pMoves.get(rand3).newRow, pMoves.get(rand3).newCol);
 		}
+		
+		switchPlayer();
 		}
 		
 		
 	}
+	
+
 	
 	/**
 	 * Helper method to allow computer player to take a piece
@@ -1184,6 +963,127 @@ public class CheckersComputerPlayer {
 	}
 
 } //end CheckersComputerPlayer class
+
+/**
+ * Returns the legal moves available for a player.
+ * If any jumps exist, only jumps will be returned in vector, as jump moves
+ * should be made first. Looks at each space on board and determines if the move
+ * is valid for the specified player.
+ * @param player
+ * @return Vector of Moves vector of moves available to player.
+ */
+public Vector<Move> getLegalMoves(int player){
+	
+	Vector<Move> pMovesTotal = new Vector<Move>();
+	
+	//Iterate through each position on the board for player's pieces
+	for(int row = 0; row < 8; row++) {
+		for(int col = 0; col < 8; col++) {
+			Vector<Move> pMoves = getLegalJumps(player, row, col);
+			
+			//Return all moves for piece at position (row,col)
+			pMoves = getLegalMoves(player, row, col);
+		
+			//Add all members of pMoves to pMovesTotal
+			for(int i = 0; i < pMoves.size(); i++) {
+				pMovesTotal.add(pMoves.get(i));
+			}
+		}
+	}
+	return pMovesTotal;
+	
+}
+
+/**
+ * getLegalMoves(player, row, col) verifies if the given position (row,col)
+ * has legal moves for the player. If so, the moves are stored in the Move vector
+ * and returned to the previous getLegalMoves method.
+ *** PARAMS MUST BE IN CONVERTED VERSIONS!
+ * @param player current player
+ * @param row current piece position (row) being checked
+ * @param col current piece position (col) being checked 
+ * @return Vector of Moves - a list of possible moves.
+ */
+public Vector<Move> getLegalMoves(int player, int row, int col){
+	Vector<Move> pMoves = new Vector<Move>();
+	
+	//For player o, checks if piece is an o piece, then checks
+	//If the there are legal moves for that piece.
+	//Inputs char values of row,col into validMove.
+	if(player == PLAYER_O) {
+		if(board.board[row][col] == SYMBOL_O) {
+			if(validMove(player, row,col,row-1, col-1))
+				pMoves.add(new Move(player, board.board, row, col, row-1, col-1));
+			if(validMove(player, row, col, row-1,row+1))
+				pMoves.add(new Move(player, board.board, row, col, row-1, col+1));
+		}
+	
+	}
+	
+	//For player x, checks if the piece is an x piece, then checks
+	//If there are legal moves for that piece.
+	else if (player == PLAYER_X) {
+		if(board.board[row][col] == SYMBOL_X) {
+			if(validMove(player, row, col, row+1,col+1))
+				pMoves.add(new Move(player, board.board, row, col, row+1, col+1));
+			if(validMove(player, row, col, row+1, col-1))
+				pMoves.add(new Move(player, board.board, row, col, row+1, col-1));
+
+		}
+	}
+	return pMoves;
+}
+
+/**
+ * Adds legal jumps to a vector of moves. Verifies that a jump is legal by checking that it is the correct symbol,
+ * the move is valid, and the jump is valid before adding to the list. 
+ * **Params must be in converted versions!!!!***
+ * @param player current player
+ * @param row current piece position (row)
+ * @param col current piece position (column)
+ * @return Vector of Moves pMoves, all possible jumps. 
+ */
+public Vector<Move> getLegalJumps(int player, int row, int col){
+	Vector<Move> pMoves = new Vector<Move>();
+	if(player == PLAYER_O) {
+		if(board.board[row][col] == SYMBOL_O) {
+			if(validMove(player, row, col, row+2, col+2))
+				if(moveIsJump(player, row, col, row+2, col+2))
+					pMoves.addElement(new Move(player, board.board, row, col, row+2, col+2));
+			if(validMove(player, row, col, row-2, col-2))
+				if(moveIsJump(player, row, col, row-2,col-2))
+					pMoves.addElement(new Move(player, board.board, row, col, row-2, col-2));
+			if(validMove(player, row, col, row+2, col-2))
+				if(moveIsJump(player, row, col, row+2, col-2))
+					pMoves.addElement(new Move(player, board.board, row, col, row+2, col-2));
+			if(validMove(player, row, col, row-2, col+2))
+				if(moveIsJump(player, row, col, row-2, col+2))
+					pMoves.addElement(new Move(player, board.board, row, col, row-2, col+2));
+		}
+	}
+	
+	if(player == PLAYER_X) {
+		if(board.board[row][col] == SYMBOL_X) {
+			if(validMove(player, row, col, row+2, col+2))
+				if(moveIsJump(player, row, col, row+2, col+2))
+					pMoves.add(new Move(player, board.board, row, col, row+2, col+2));
+			if(validMove(player, row, col, row-2, col-2))
+				if(moveIsJump(player, row, col, row-2,col-2))
+					pMoves.add(new Move(player, board.board, row, col, row-2, col-2));
+			if(validMove(player, row, col, row+2, col-2))
+				if(moveIsJump(player, row, col, row+2, col-2))
+					pMoves.add(new Move(player, board.board, row, col, row+2, col-2));
+			if(validMove(player, row, col, row-2, col+2))
+				if(moveIsJump(player, row, col, row-2, col+2))
+						pMoves.add(new Move(player, board.board, row, col, row-2, col+2));
+		}
+	}
+	
+	//player X jumps implementation			
+	
+	return pMoves;
+}
+
 
 
 } //end CheckersLogic class
