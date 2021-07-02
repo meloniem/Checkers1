@@ -2,15 +2,8 @@ package core;
 
 import static org.junit.*;
 
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Scanner;
-import java.util.Vector;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import java.io.*;
+import java.util.*;
 
 import core.CheckersLogic.CheckersGame;
 import core.CheckersLogic.Move;
