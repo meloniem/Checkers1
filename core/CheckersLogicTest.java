@@ -1,7 +1,7 @@
 package core;
 
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.*;
+
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
